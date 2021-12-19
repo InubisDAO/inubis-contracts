@@ -32,27 +32,27 @@ describe("Treasury", async () => {
         mineBlock();
         await staking.rebase();
 
-        return await sOhm.index();
+        return await sInkh.index();
     };
 
     let deployer, alice, bob, carol;
     let erc20Factory;
     let stakingFactory;
-    let ohmFactory;
-    let sOhmFactory;
-    let gOhmFactory;
+    let inkhFactory;
+    let sInkhFactory;
+    let gInkhFactory;
     let treasuryFactory;
     let distributorFactory;
     let authFactory;
-    let mockSOhmFactory;
+    let mockSInkhFactory;
 
     let auth;
     let dai;
     let lpToken;
-    let ohm;
-    let sOhm;
+    let inkh;
+    let sInkh;
     let staking;
-    let gOhm;
+    let gInkh;
     let treasury;
     let distributor;
 
@@ -67,14 +67,14 @@ describe("Treasury", async () => {
 
         //erc20Factory = await ethers.getContractFactory('MockERC20');
         // TODO use dai as erc20 for now
-        authFactory = await ethers.getContractFactory("OlympusAuthority");
+        authFactory = await ethers.getContractFactory("InubisAuthority");
         erc20Factory = await ethers.getContractFactory("DAI");
 
-        stakingFactory = await ethers.getContractFactory("OlympusStaking");
-        ohmFactory = await ethers.getContractFactory("OlympusERC20Token");
-        sOhmFactory = await ethers.getContractFactory("sOlympus");
-        gOhmFactory = await ethers.getContractFactory("gOHM");
-        treasuryFactory = await ethers.getContractFactory("OlympusTreasury");
+        stakingFactory = await ethers.getContractFactory("InubisStaking");
+        inkhFactory = await ethers.getContractFactory("InubisERC20Token");
+        sInkhFactory = await ethers.getContractFactory("sInubis");
+        gInkhFactory = await ethers.getContractFactory("gINKH");
+        treasuryFactory = await ethers.getContractFactory("InubisTreasury");
         distributorFactory = await ethers.getContractFactory("Distributor");
     });
 
@@ -92,22 +92,22 @@ describe("Treasury", async () => {
             deployer.address,
             deployer.address
         ); // TODO
-        ohm = await ohmFactory.deploy(auth.address);
-        sOhm = await sOhmFactory.deploy();
-        gOhm = await gOhmFactory.deploy(sOhm.address, sOhm.address); // Call migrate immediately
+        inkh = await inkhFactory.deploy(auth.address);
+        sInkh = await sInkhFactory.deploy();
+        gInkh = await gInkhFactory.deploy(sInkh.address, sInkh.address); // Call migrate immediately
         staking = await stakingFactory.deploy(
-            ohm.address,
-            sOhm.address,
-            gOhm.address,
+            inkh.address,
+            sInkh.address,
+            gInkh.address,
             "10",
             "1",
             "9",
             auth.address
         );
-        treasury = await treasuryFactory.deploy(ohm.address, "0", auth.address);
+        treasury = await treasuryFactory.deploy(inkh.address, "0", auth.address);
         distributor = await distributorFactory.deploy(
             treasury.address,
-            ohm.address,
+            inkh.address,
             staking.address,
             auth.address
         );
@@ -115,21 +115,21 @@ describe("Treasury", async () => {
         // Setup for each component
 
         // Needed for treasury deposit
-        //await gOhm.migrate(staking.address, sOhm.address);
+        //await gInkh.migrate(staking.address, sInkh.address);
         await dai.mint(deployer.address, initialMint);
         await dai.approve(treasury.address, LARGE_APPROVAL);
 
-        // Needed to spend deployer's OHM
-        await ohm.approve(staking.address, LARGE_APPROVAL);
+        // Needed to spend deployer's INKH
+        await inkh.approve(staking.address, LARGE_APPROVAL);
 
-        // To get past OHM contract guards
+        // To get past INKH contract guards
         await auth.pushVault(treasury.address, true);
 
-        // Initialization for sOHM contract.
+        // Initialization for sINKH contract.
         // Set index to 10
-        await sOhm.setIndex("10000000000");
-        await sOhm.setgOHM(gOhm.address);
-        await sOhm.initialize(staking.address, treasury.address);
+        await sInkh.setIndex("10000000000");
+        await sInkh.setgINKH(gInkh.address);
+        await sInkh.initialize(staking.address, treasury.address);
 
         // Set distributor staking contract
         await staking.setDistributor(distributor.address);
@@ -144,10 +144,10 @@ describe("Treasury", async () => {
         await treasury.enable("4", deployer.address, ZERO_ADDRESS);
         // toggle DAI as reserve token
         await treasury.enable("2", dai.address, ZERO_ADDRESS);
-        // set sOHM
-        await treasury.enable("9", sOhm.address, ZERO_ADDRESS);
+        // set sINKH
+        await treasury.enable("9", sInkh.address, ZERO_ADDRESS);
 
-        // Deposit 10,000 DAI to treasury, 1,000 OHM gets minted to deployer with 9000 as excess reserves (ready to be minted)
+        // Deposit 10,000 DAI to treasury, 1,000 INKH gets minted to deployer with 9000 as excess reserves (ready to be minted)
         await treasury
             .connect(deployer)
             .deposit("10000000000000000000000", dai.address, "9000000000000");
@@ -155,17 +155,17 @@ describe("Treasury", async () => {
         // Add staking as recipient of distributor with a test reward rate
         await distributor.addRecipient(staking.address, initialRewardRate);
 
-        // Get sOHM in deployer wallet
-        const sohmAmount = "1000000000000";
-        await ohm.approve(staking.address, sohmAmount);
-        await staking.stake(deployer.address, sohmAmount, true, true);
+        // Get sINKH in deployer wallet
+        const sinkhAmount = "1000000000000";
+        await inkh.approve(staking.address, sinkhAmount);
+        await staking.stake(deployer.address, sinkhAmount, true, true);
 
-        // Transfer 10 sOHM to alice for testing
-        await sOhm.transfer(alice.address, debtLimit);
+        // Transfer 10 sINKH to alice for testing
+        await sInkh.transfer(alice.address, debtLimit);
     });
 
     it("should not have debt logged for alice", async () => {
-        expect(await sOhm.debtBalances(alice.address)).to.equal(0);
+        expect(await sInkh.debtBalances(alice.address)).to.equal(0);
     });
 
     it("should not have alice as a debtor", async () => {
@@ -192,19 +192,19 @@ describe("Treasury", async () => {
         await treasury.enable(7, alice.address, ZERO_ADDRESS);
         await treasury.setDebtLimit(alice.address, debtLimit);
         await treasury.connect(alice).incurDebt(1e9, dai.address);
-        expect(await sOhm.debtBalances(alice.address)).to.equal(1);
+        expect(await sInkh.debtBalances(alice.address)).to.equal(1);
     });
 
     it("should allow alice to borrow up to her balance in dai", async () => {
-        let staked = await sOhm.balanceOf(alice.address);
+        let staked = await sInkh.balanceOf(alice.address);
         await treasury.enable(7, alice.address, ZERO_ADDRESS);
         await treasury.setDebtLimit(alice.address, debtLimit);
         await treasury.connect(alice).incurDebt(String(staked * 1000000000), dai.address);
-        expect(await sOhm.debtBalances(alice.address)).to.equal(staked);
+        expect(await sInkh.debtBalances(alice.address)).to.equal(staked);
     });
 
     it("should not allow alice to borrow more than her balance in dai", async () => {
-        let staked = await sOhm.balanceOf(alice.address);
+        let staked = await sInkh.balanceOf(alice.address);
         await treasury.enable(7, alice.address, ZERO_ADDRESS);
         await treasury.setDebtLimit(alice.address, debtLimit);
         await expect(
@@ -212,50 +212,50 @@ describe("Treasury", async () => {
         ).to.be.revertedWith("");
     });
 
-    it("should allow alice to borrow up to her balance in ohm", async () => {
-        let staked = await sOhm.balanceOf(alice.address);
+    it("should allow alice to borrow up to her balance in inkh", async () => {
+        let staked = await sInkh.balanceOf(alice.address);
         await treasury.enable(10, alice.address, ZERO_ADDRESS);
         await treasury.setDebtLimit(alice.address, debtLimit);
-        await treasury.connect(alice).incurDebt(staked, ohm.address);
-        expect(await sOhm.debtBalances(alice.address)).to.equal(staked);
+        await treasury.connect(alice).incurDebt(staked, inkh.address);
+        expect(await sInkh.debtBalances(alice.address)).to.equal(staked);
     });
 
-    it("should not allow alice to borrow more than her balance in sOhm", async () => {
-        let staked = await sOhm.balanceOf(alice.address);
+    it("should not allow alice to borrow more than her balance in sInkh", async () => {
+        let staked = await sInkh.balanceOf(alice.address);
         await treasury.enable(10, alice.address, ZERO_ADDRESS);
         await treasury.setDebtLimit(alice.address, debtLimit * 2);
         await expect(
-            treasury.connect(alice).incurDebt(String(staked + 1), ohm.address)
-        ).to.be.revertedWith("sOHM: insufficient balance");
+            treasury.connect(alice).incurDebt(String(staked + 1), inkh.address)
+        ).to.be.revertedWith("sINKH: insufficient balance");
     });
 
     it("should not allow alice to borrow more than her debt limit", async () => {
-        sOhm.transfer(alice.address, debtLimit);
-        let staked = await sOhm.balanceOf(alice.address);
+        sInkh.transfer(alice.address, debtLimit);
+        let staked = await sInkh.balanceOf(alice.address);
         await treasury.enable(10, alice.address, ZERO_ADDRESS);
         await treasury.setDebtLimit(alice.address, debtLimit);
-        await expect(treasury.connect(alice).incurDebt(staked, ohm.address)).to.be.revertedWith(
+        await expect(treasury.connect(alice).incurDebt(staked, inkh.address)).to.be.revertedWith(
             "Treasury: exceeds limit"
         );
     });
 
     it("should allow alice to repay in dai", async () => {
-        let staked = await sOhm.balanceOf(alice.address);
+        let staked = await sInkh.balanceOf(alice.address);
         await treasury.enable(7, alice.address, ZERO_ADDRESS);
         await treasury.setDebtLimit(alice.address, debtLimit);
         await treasury.connect(alice).incurDebt(String(staked * 1e9), dai.address);
         await dai.connect(alice).approve(treasury.address, String(staked * 1e9));
         await treasury.connect(alice).repayDebtWithReserve(String(staked * 1e9), dai.address);
-        expect(await sOhm.debtBalances(alice.address)).to.equal(0);
+        expect(await sInkh.debtBalances(alice.address)).to.equal(0);
     });
 
-    it("should allow alice to repay her debt in ohm", async () => {
-        let staked = await sOhm.balanceOf(alice.address);
+    it("should allow alice to repay her debt in inkh", async () => {
+        let staked = await sInkh.balanceOf(alice.address);
         await treasury.enable(10, alice.address, ZERO_ADDRESS);
         await treasury.setDebtLimit(alice.address, debtLimit);
-        await treasury.connect(alice).incurDebt(staked, ohm.address);
-        await ohm.connect(alice).approve(treasury.address, staked);
-        await treasury.connect(alice).repayDebtWithOHM(staked);
-        expect(await sOhm.debtBalances(alice.address)).to.equal(0);
+        await treasury.connect(alice).incurDebt(staked, inkh.address);
+        await inkh.connect(alice).approve(treasury.address, staked);
+        await treasury.connect(alice).repayDebtWithINKH(staked);
+        expect(await sInkh.debtBalances(alice.address)).to.equal(0);
     });
 });

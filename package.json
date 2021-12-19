@@ -1,7 +1,7 @@
 {
-  "name": "olympus-contracts",
+  "name": "inubis-contracts",
   "version": "1.0.0",
-  "description": "Smart Contracts for Olympus",
+  "description": "Smart Contracts for Inubis",
   "directories": {
     "test": "test"
   },
@@ -51,6 +51,7 @@
     "lint:sol": "solhint -f table contracts/**/*.sol",
     "format": "prettier --check \"**/*.{ts,js,sol}\"",
     "format:fix": "prettier --write \"**/*.{ts,js,sol}\"",
+    "clean": "hardhat clean",
     "compile": "hardhat compile",
     "clean": "hardhat clean",
     "void:deploy": "hardhat deploy",
@@ -70,11 +71,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/OlympusDAO/olympus-contracts.git"
+    "url": "git+https://github.com/InubisDAO/inubis-contracts.git"
   },
   "author": "",
   "bugs": {
-    "url": "https://github.com/OlympusDAO/olympus-contracts/issues"
+    "url": "https://github.com/InubisDAO/inubis-contracts/issues"
   },
-  "homepage": "https://github.com/OlympusDAO/olympus-contracts#readme"
+  "homepage": "https://github.com/InubisDAO/inubis-contracts#readme"
 }

@@ -12,8 +12,8 @@ import {
     ISwapRouter,
     LUSDAllocator,
     LUSDAllocator__factory,
-    OlympusAuthority,
-    OlympusAuthority__factory,
+    InubisAuthority,
+    InubisAuthority__factory,
 } from "../../types";
 const { fork_network, fork_reset } = require("../utils/network_fork");
 const impersonateAccount = require("../utils/impersonate_account");
@@ -43,7 +43,7 @@ describe("LUSDAllocator", () => {
         let daiTokenFake: FakeContract<IERC20>;
         let swapRouterFake: FakeContract<ISwapRouter>;
         let lusdAllocator: LUSDAllocator;
-        let authority: OlympusAuthority;
+        let authority: InubisAuthority;
 
         beforeEach(async () => {
             [owner, governor, guardian, other, alice, bob] = await ethers.getSigners();
@@ -59,7 +59,7 @@ describe("LUSDAllocator", () => {
             wethTokenFake = await smock.fake<IERC20>("contracts/interfaces/IERC20.sol:IERC20");
             daiTokenFake = await smock.fake<IERC20>("contracts/interfaces/IERC20.sol:IERC20");
             swapRouterFake = await smock.fake<ISwapRouter>("ISwapRouter");
-            authority = await new OlympusAuthority__factory(owner).deploy(
+            authority = await new InubisAuthority__factory(owner).deploy(
                 governor.address,
                 guardian.address,
                 owner.address,

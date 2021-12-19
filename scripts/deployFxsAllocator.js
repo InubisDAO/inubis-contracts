@@ -13,11 +13,11 @@ async function main() {
     const instance = await upgrades.deployProxy(FraxSharesAllocator, constructorArgs);
     await instance.deployed();
 
-    await instance.transferOwnership("0x245cc372C84B3645Bf0Ffe6538620B04a217988B"); // OlympusDAO Multisig
+    await instance.transferOwnership("0x245cc372C84B3645Bf0Ffe6538620B04a217988B"); // InubisDAO Multisig
 
     const address = await upgrades.erc1967.getImplementationAddress(instance.address);
 
-    console.log("Deployed FraxSharesAllocator to", instance.address)
+    console.log("Deployed FraxSharesAllocator to", instance.address);
     console.log("implementation at", address);
 
     await hre.run("verify:verify", {
@@ -25,13 +25,12 @@ async function main() {
         constructorArguments: [],
     });
 
-
     console.log("Transferred ownership to multisig");
 }
 
 main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+    .then(() => process.exit(0))
+    .catch((error) => {
+        console.error(error);
+        process.exit(1);
+    });

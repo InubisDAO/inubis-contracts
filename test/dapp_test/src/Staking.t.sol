@@ -8,12 +8,12 @@ import "../../../contracts/libraries/SafeMath.sol";
 import "../../../contracts/libraries/FixedPoint.sol";
 import "../../../contracts/libraries/FullMath.sol";
 import "../../../contracts/Staking.sol";
-import "../../../contracts/OlympusERC20.sol";
-import "../../../contracts/sOlympusERC20.sol";
-import "../../../contracts/governance/gOHM.sol";
+import "../../../contracts/InubisERC20.sol";
+import "../../../contracts/sInubisERC20.sol";
+import "../../../contracts/governance/gINKH.sol";
 import "../../../contracts/Treasury.sol";
 import "../../../contracts/StakingDistributor.sol";
-import "../../../contracts/OlympusAuthority.sol";
+import "../../../contracts/InubisAuthority.sol";
 
 import "./util/Hevm.sol";
 import "./util/MockContract.sol";
@@ -23,14 +23,14 @@ contract StakingTest is DSTest {
     using SafeMath for uint256;
     using SafeMath for uint112;
 
-    OlympusStaking internal staking;
-    OlympusTreasury internal treasury;
-    OlympusAuthority internal authority;
+    InubisStaking internal staking;
+    InubisTreasury internal treasury;
+    InubisAuthority internal authority;
     Distributor internal distributor;
 
-    OlympusERC20Token internal ohm;
-    sOlympus internal sohm;
-    gOHM internal gohm;
+    InubisERC20Token internal inkh;
+    sInubis internal sinkh;
+    gINKH internal ginkh;
 
     MockContract internal mockToken;
 
@@ -53,40 +53,40 @@ contract StakingTest is DSTest {
         mockToken.givenMethodReturnUint(abi.encodeWithSelector(ERC20.decimals.selector), 18);
         mockToken.givenMethodReturnBool(abi.encodeWithSelector(IERC20.transferFrom.selector), true);
 
-        authority = new OlympusAuthority(address(this), address(this), address(this), address(this));
+        authority = new InubisAuthority(address(this), address(this), address(this), address(this));
 
-        ohm = new OlympusERC20Token(address(authority));
-        gohm = new gOHM(address(this), address(this));
-        sohm = new sOlympus();
-        sohm.setIndex(10);
-        sohm.setgOHM(address(gohm));
+        inkh = new InubisERC20Token(address(authority));
+        ginkh = new gINKH(address(this), address(this));
+        sinkh = new sInubis();
+        sinkh.setIndex(10);
+        sinkh.setgINKH(address(ginkh));
 
-        treasury = new OlympusTreasury(address(ohm), 1, address(authority));
+        treasury = new InubisTreasury(address(inkh), 1, address(authority));
 
-        staking = new OlympusStaking(
-            address(ohm),
-            address(sohm),
-            address(gohm),
+        staking = new InubisStaking(
+            address(inkh),
+            address(sinkh),
+            address(ginkh),
             EPOCH_LENGTH,
             START_TIME,
             NEXT_REBASE_TIME,
             address(authority)
         );
 
-        distributor = new Distributor(address(treasury), address(ohm), address(staking), address(authority));
+        distributor = new Distributor(address(treasury), address(inkh), address(staking), address(authority));
         distributor.setBounty(BOUNTY);
         staking.setDistributor(address(distributor));
-        treasury.enable(OlympusTreasury.STATUS.REWARDMANAGER, address(distributor), address(0)); // Allows distributor to mint ohm.
-        treasury.enable(OlympusTreasury.STATUS.RESERVETOKEN, address(mockToken), address(0)); // Allow mock token to be deposited into treasury
-        treasury.enable(OlympusTreasury.STATUS.RESERVEDEPOSITOR, address(this), address(0)); // Allow this contract to deposit token into treeasury
+        treasury.enable(InubisTreasury.STATUS.REWARDMANAGER, address(distributor), address(0)); // Allows distributor to mint inkh.
+        treasury.enable(InubisTreasury.STATUS.RESERVETOKEN, address(mockToken), address(0)); // Allow mock token to be deposited into treasury
+        treasury.enable(InubisTreasury.STATUS.RESERVEDEPOSITOR, address(this), address(0)); // Allow this contract to deposit token into treeasury
 
-        sohm.initialize(address(staking), address(treasury));
-        gohm.migrate(address(staking), address(sohm));
+        sinkh.initialize(address(staking), address(treasury));
+        ginkh.migrate(address(staking), address(sinkh));
 
         // Give the treasury permissions to mint
         authority.pushVault(address(treasury), true);
 
-        // Deposit a token who's profit (3rd param) determines how much ohm the treasury can mint
+        // Deposit a token who's profit (3rd param) determines how much inkh the treasury can mint
         uint256 depositAmount = 20e18;
         treasury.deposit(depositAmount, address(mockToken), BOUNTY.mul(2)); // Mints (depositAmount- 2xBounty) for this contract
     }
@@ -109,32 +109,32 @@ contract StakingTest is DSTest {
     }
 
     function testStake() public {
-        ohm.approve(address(staking), AMOUNT);
+        inkh.approve(address(staking), AMOUNT);
         uint256 amountStaked = staking.stake(address(this), AMOUNT, true, true);
         assertEq(amountStaked, AMOUNT);
     }
 
-    function testStakeAtRebaseToGohm() public {
+    function testStakeAtRebaseToGinkh() public {
         // Move into next rebase window
         hevm.warp(EPOCH_LENGTH);
 
-        ohm.approve(address(staking), AMOUNT);
-        bool isSohm = false;
+        inkh.approve(address(staking), AMOUNT);
+        bool isSinkh = false;
         bool claim = true;
-        uint256 gOHMRecieved = staking.stake(address(this), AMOUNT, isSohm, claim);
+        uint256 gINKHRecieved = staking.stake(address(this), AMOUNT, isSinkh, claim);
 
-        uint256 expectedAmount = gohm.balanceTo(AMOUNT.add(BOUNTY));
-        assertEq(gOHMRecieved, expectedAmount);
+        uint256 expectedAmount = ginkh.balanceTo(AMOUNT.add(BOUNTY));
+        assertEq(gINKHRecieved, expectedAmount);
     }
 
     function testStakeAtRebase() public {
         // Move into next rebase window
         hevm.warp(EPOCH_LENGTH);
 
-        ohm.approve(address(staking), AMOUNT);
-        bool isSohm = true;
+        inkh.approve(address(staking), AMOUNT);
+        bool isSinkh = true;
         bool claim = true;
-        uint256 amountStaked = staking.stake(address(this), AMOUNT, isSohm, claim);
+        uint256 amountStaked = staking.stake(address(this), AMOUNT, isSinkh, claim);
 
         uint256 expectedAmount = AMOUNT.add(BOUNTY);
         assertEq(amountStaked, expectedAmount);
@@ -142,96 +142,96 @@ contract StakingTest is DSTest {
 
     function testUnstake() public {
         bool triggerRebase = true;
-        bool isSohm = true;
+        bool isSinkh = true;
         bool claim = true;
 
-        // Stake the ohm
-        uint256 initialOhmBalance = ohm.balanceOf(address(this));
-        ohm.approve(address(staking), initialOhmBalance);
-        uint256 amountStaked = staking.stake(address(this), initialOhmBalance, isSohm, claim);
-        assertEq(amountStaked, initialOhmBalance);
+        // Stake the inkh
+        uint256 initialInkhBalance = inkh.balanceOf(address(this));
+        inkh.approve(address(staking), initialInkhBalance);
+        uint256 amountStaked = staking.stake(address(this), initialInkhBalance, isSinkh, claim);
+        assertEq(amountStaked, initialInkhBalance);
 
         // Validate balances post stake
-        uint256 ohmBalance = ohm.balanceOf(address(this));
-        uint256 sOhmBalance = sohm.balanceOf(address(this));
-        assertEq(ohmBalance, 0);
-        assertEq(sOhmBalance, initialOhmBalance);
+        uint256 inkhBalance = inkh.balanceOf(address(this));
+        uint256 sInkhBalance = sinkh.balanceOf(address(this));
+        assertEq(inkhBalance, 0);
+        assertEq(sInkhBalance, initialInkhBalance);
 
-        // Unstake sOHM
-        sohm.approve(address(staking), sOhmBalance);
-        staking.unstake(address(this), sOhmBalance, triggerRebase, isSohm);
+        // Unstake sINKH
+        sinkh.approve(address(staking), sInkhBalance);
+        staking.unstake(address(this), sInkhBalance, triggerRebase, isSinkh);
 
         // Validate Balances post unstake
-        ohmBalance = ohm.balanceOf(address(this));
-        sOhmBalance = sohm.balanceOf(address(this));
-        assertEq(ohmBalance, initialOhmBalance);
-        assertEq(sOhmBalance, 0);
+        inkhBalance = inkh.balanceOf(address(this));
+        sInkhBalance = sinkh.balanceOf(address(this));
+        assertEq(inkhBalance, initialInkhBalance);
+        assertEq(sInkhBalance, 0);
     }
 
     function testUnstakeAtRebase() public {
         bool triggerRebase = true;
-        bool isSohm = true;
+        bool isSinkh = true;
         bool claim = true;
 
-        // Stake the ohm
-        uint256 initialOhmBalance = ohm.balanceOf(address(this));
-        ohm.approve(address(staking), initialOhmBalance);
-        uint256 amountStaked = staking.stake(address(this), initialOhmBalance, isSohm, claim);
-        assertEq(amountStaked, initialOhmBalance);
+        // Stake the inkh
+        uint256 initialInkhBalance = inkh.balanceOf(address(this));
+        inkh.approve(address(staking), initialInkhBalance);
+        uint256 amountStaked = staking.stake(address(this), initialInkhBalance, isSinkh, claim);
+        assertEq(amountStaked, initialInkhBalance);
 
         // Move into next rebase window
         hevm.warp(EPOCH_LENGTH);
 
         // Validate balances post stake
-        // Post initial rebase, distribution amount is 0, so sOHM balance doens't change.
-        uint256 ohmBalance = ohm.balanceOf(address(this));
-        uint256 sOhmBalance = sohm.balanceOf(address(this));
-        assertEq(ohmBalance, 0);
-        assertEq(sOhmBalance, initialOhmBalance);
+        // Post initial rebase, distribution amount is 0, so sINKH balance doens't change.
+        uint256 inkhBalance = inkh.balanceOf(address(this));
+        uint256 sInkhBalance = sinkh.balanceOf(address(this));
+        assertEq(inkhBalance, 0);
+        assertEq(sInkhBalance, initialInkhBalance);
 
-        // Unstake sOHM
-        sohm.approve(address(staking), sOhmBalance);
-        staking.unstake(address(this), sOhmBalance, triggerRebase, isSohm);
+        // Unstake sINKH
+        sinkh.approve(address(staking), sInkhBalance);
+        staking.unstake(address(this), sInkhBalance, triggerRebase, isSinkh);
 
         // Validate balances post unstake
-        ohmBalance = ohm.balanceOf(address(this));
-        sOhmBalance = sohm.balanceOf(address(this));
-        uint256 expectedAmount = initialOhmBalance.add(BOUNTY); // Rebase earns a bounty
-        assertEq(ohmBalance, expectedAmount);
-        assertEq(sOhmBalance, 0);
+        inkhBalance = inkh.balanceOf(address(this));
+        sInkhBalance = sinkh.balanceOf(address(this));
+        uint256 expectedAmount = initialInkhBalance.add(BOUNTY); // Rebase earns a bounty
+        assertEq(inkhBalance, expectedAmount);
+        assertEq(sInkhBalance, 0);
     }
 
-    function testUnstakeAtRebaseFromGohm() public {
+    function testUnstakeAtRebaseFromGinkh() public {
         bool triggerRebase = true;
-        bool isSohm = false;
+        bool isSinkh = false;
         bool claim = true;
 
-        // Stake the ohm
-        uint256 initialOhmBalance = ohm.balanceOf(address(this));
-        ohm.approve(address(staking), initialOhmBalance);
-        uint256 amountStaked = staking.stake(address(this), initialOhmBalance, isSohm, claim);
-        uint256 gohmAmount = gohm.balanceTo(initialOhmBalance);
-        assertEq(amountStaked, gohmAmount);
+        // Stake the inkh
+        uint256 initialInkhBalance = inkh.balanceOf(address(this));
+        inkh.approve(address(staking), initialInkhBalance);
+        uint256 amountStaked = staking.stake(address(this), initialInkhBalance, isSinkh, claim);
+        uint256 ginkhAmount = ginkh.balanceTo(initialInkhBalance);
+        assertEq(amountStaked, ginkhAmount);
 
         // test the unstake
         // Move into next rebase window
         hevm.warp(EPOCH_LENGTH);
 
         // Validate balances post-stake
-        uint256 ohmBalance = ohm.balanceOf(address(this));
-        uint256 gohmBalance = gohm.balanceOf(address(this));
-        assertEq(ohmBalance, 0);
-        assertEq(gohmBalance, gohmAmount);
+        uint256 inkhBalance = inkh.balanceOf(address(this));
+        uint256 ginkhBalance = ginkh.balanceOf(address(this));
+        assertEq(inkhBalance, 0);
+        assertEq(ginkhBalance, ginkhAmount);
 
-        // Unstake gOHM
-        gohm.approve(address(staking), gohmBalance);
-        staking.unstake(address(this), gohmBalance, triggerRebase, isSohm);
+        // Unstake gINKH
+        ginkh.approve(address(staking), ginkhBalance);
+        staking.unstake(address(this), ginkhBalance, triggerRebase, isSinkh);
 
         // Validate balances post unstake
-        ohmBalance = ohm.balanceOf(address(this));
-        gohmBalance = gohm.balanceOf(address(this));
-        uint256 expectedOhm = initialOhmBalance.add(BOUNTY); // Rebase earns a bounty
-        assertEq(ohmBalance, expectedOhm);
-        assertEq(gohmBalance, 0);
+        inkhBalance = inkh.balanceOf(address(this));
+        ginkhBalance = ginkh.balanceOf(address(this));
+        uint256 expectedInkh = initialInkhBalance.add(BOUNTY); // Rebase earns a bounty
+        assertEq(inkhBalance, expectedInkh);
+        assertEq(ginkhBalance, 0);
     }
 }

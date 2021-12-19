@@ -39,7 +39,7 @@ describe("Alchemix Allocator", async () => {
             OLYMPUS_AUTHORITY_ADDRESS
         );
 
-        treasury = await ethers.getContractAt("OlympusTreasury", TREASURY_ADDRESS);
+        treasury = await ethers.getContractAt("InubisTreasury", TREASURY_ADDRESS);
         alchemix_token = await ethers.getContractAt(
             "contracts/interfaces/IERC20.sol:IERC20",
             ALCHEMIX
@@ -96,7 +96,7 @@ describe("Alchemix Allocator", async () => {
         ).to.revertedWith("ERC20: transfer amount exceeds balance");
     });
 
-    it("Should deposit OHM treasury Alchemix funds to tokemak, stake received tALCX on Alchemix pool", async () => {
+    it("Should deposit INKH treasury Alchemix funds to tokemak, stake received tALCX on Alchemix pool", async () => {
         await alchemixAllocator
             .connect(guardian)
             .deposit(treasury_alchemix_initial_balance, 8, false);
@@ -164,7 +164,7 @@ describe("Alchemix Allocator", async () => {
         );
     });
 
-    it("Should withdraw Alchemix funds from tokemak tALCX pool and send it back OHM treasury with accrued profit", async () => {
+    it("Should withdraw Alchemix funds from tokemak tALCX pool and send it back INKH treasury with accrued profit", async () => {
         await impersonateAccount("0x90b6C61B102eA260131aB48377E143D6EB3A9d4B");
         const onlyRollover = await ethers.getSigner("0x90b6C61B102eA260131aB48377E143D6EB3A9d4B");
 
